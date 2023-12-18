@@ -10,15 +10,15 @@ import helper_funcs
 import sys
 
 chrome_handler.start_chrome()
-
 service = Service(os.getcwd() + "/chromedriver.exe")
 print(os.getcwd() + "/chromedriver")
 chrome_options = webdriver.ChromeOptions()
 
 chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-# chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--headless")
 
 driver = webdriver.Chrome(service=service, options=chrome_options)
+
 helper_fn = helper_funcs.HelperFn(driver)
 
 
@@ -97,7 +97,7 @@ def Receive_limit():
 
 
 def make_gpt_request(text):
-    time.sleep(3)
+    time.sleep(5)
     text_area_xpath = "//*[@id='prompt-textarea']"
     helper_fn.wait_for_element(text_area_xpath,5)
     if helper_fn.is_element_present(text_area_xpath):
@@ -106,14 +106,24 @@ def make_gpt_request(text):
 
         #send button
         send_btn_xpath = "//*[@data-testid='send-button']"
-        helper_fn.wait_for_element(send_btn_xpath,3)
+        helper_fn.wait_for_element(send_btn_xpath,5)
         send_btn = helper_fn.find_element(send_btn_xpath)
         send_btn.click()
 
-    time.sleep(20)
+    time.sleep(10)
     #waiting for response
-    response_xpath = "//*[@class='markdown prose w-full break-words dark:prose-invert light']"
+    times=0
+    regenerate_button_xpath = "//*[@class='btn relative btn-primary m-auto']"
+    while (helper_fn.is_element_present(regenerate_button_xpath)):
+        if times == 5:
+            break
+        times+=1
+        regenerate_btn = helper_fn.find_element(regenerate_button_xpath)
+        regenerate_btn.click()
+        time.sleep(10)
+    _,_ = Receive_limit()
     regenrate_xpath = '//*[@class="absolute p-1 rounded-md md:bottom-3 md:p-2 md:right-3 dark:hover:bg-gray-900 dark:disabled:hover:bg-transparent right-2 gizmo:dark:disabled:bg-white gizmo:disabled:bg-black gizmo:disabled:opacity-10 disabled:text-gray-400 enabled:bg-brand-purple gizmo:enabled:bg-black text-white gizmo:p-0.5 gizmo:border gizmo:border-black gizmo:rounded-lg gizmo:dark:border-white gizmo:dark:bg-white bottom-1.5 transition-colors disabled:opacity-40"]'
+    response_xpath = "//*[@class='markdown prose w-full break-words dark:prose-invert light']"
     helper_fn.wait_for_element(regenrate_xpath,5)
     driver.execute_script("window.scrollBy(0,1000)")
     if helper_fn.is_element_present(response_xpath):
@@ -122,6 +132,13 @@ def make_gpt_request(text):
         return response.text # will return all the texual information under that perticular xpath
 
 
+def add_session():
+    add_xpath = r"//*[@class='text-token-text-primary']"
+    helper_fn.wait_for_element(add_xpath,10)
+    if helper_fn.is_element_present(add_xpath):
+        add_button = helper_fn.find_elements(add_xpath)[1]
+        add_button.click()
+    time.sleep(10)
 
 def stop_chat_gpt():
     driver.close()
